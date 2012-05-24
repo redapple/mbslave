@@ -42,4 +42,4 @@ DROP FUNCTION remove_unused_url();
 DROP FUNCTION set_release_group_first_release_date(release_group_id INTEGER);
 DROP FUNCTION simplify_search_hints();
 DROP FUNCTION unique_primary();
-DROP AGGREGATE array_accum;
+DROP AGGREGATE array_accum (*);
