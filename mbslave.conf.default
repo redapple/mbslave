@@ -13,6 +13,21 @@ base_url=http://ftp.musicbrainz.org/pub/musicbrainz/data/replication/
 ignore=
 #ignore=tracklist_index
 
+# example "accept" value for artists related tables
+#accept=artist,artist_name,artist_type,
+#    artist_alias,artist_alias_type,
+#    artist_credit,artist_credit_name,
+#    artist_gid_redirect,
+#    l_artist_artist,link,link_type,
+#    url,url_gid_redirect,
+#    l_artist_url,
+#    label,label_name,label_type,
+#    label_alias,label_alias_type,
+#    label_gid_redirect,
+#    l_label_url,
+#    country,gender,
+#    replication_control
+
 [solr]
 enabled=no
 url=http://localhost:8983/solr/musicbrainz/
