@@ -1,5 +1,5 @@
 -- Automatically generated, do not edit.
-\set ON_ERROR_STOP 1
+\unset ON_ERROR_STOP
 
 ALTER TABLE annotation
    ADD CONSTRAINT annotation_fk_editor

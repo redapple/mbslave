@@ -7,7 +7,7 @@ import sys
 import os
 
 
-def load_tar(filename, db, schema, ignored_tables):
+def load_tar(filename, db, schema, ignored_tables,accepted_tables=None):
     print "Importing data from", filename
     tar = tarfile.open(filename, 'r:bz2')
     cursor = db.cursor()
@@ -16,6 +16,8 @@ def load_tar(filename, db, schema, ignored_tables):
             continue
         table = member.name.split('/')[1].replace('_sanitised', '')
         fulltable = schema + "." + table
+        if accepted_tables and table not in accepted_tables:
+            continue
         if table in ignored_tables:
             print " - Ignoring", fulltable
             continue
@@ -35,15 +37,19 @@ opts = {}
 opts['database'] = config.get('DATABASE', 'name')
 opts['user'] = config.get('DATABASE', 'user')
 if config.has_option('DATABASE', 'password'):
-	opts['password'] = config.get('DATABASE', 'password')
+    opts['password'] = config.get('DATABASE', 'password')
 if config.has_option('DATABASE', 'host'):
-	opts['host'] = config.get('DATABASE', 'host')
+    opts['host'] = config.get('DATABASE', 'host')
 if config.has_option('DATABASE', 'port'):
-	opts['port'] = config.get('DATABASE', 'port')
+    opts['port'] = config.get('DATABASE', 'port')
 db = psycopg2.connect(**opts)
 
 schema = config.get('DATABASE', 'schema')
 ignored_tables = set(config.get('TABLES', 'ignore').split(','))
+if config.has_option('TABLES', 'accept'):
+    accepted_tables = set([x.strip() for x in config.get('TABLES', 'accept').split(',')])
+else:
+    accepted_tables = None
 for filename in sys.argv[1:]:
-    load_tar(filename, db, schema, ignored_tables)
+    load_tar(filename, db, schema, ignored_tables,accepted_tables)
 

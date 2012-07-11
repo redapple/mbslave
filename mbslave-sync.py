@@ -50,12 +50,13 @@ def read_psql_dump(fp, types):
 
 class PacketImporter(object):
 
-    def __init__(self, db, schema, ignored_tables, replication_seq, hook):
+    def __init__(self, db, schema, ignored_tables, replication_seq, hook, accepted_tables = None):
         self._db = db
         self._data = {}
         self._transactions = {}
         self._schema = schema
         self._ignored_tables = ignored_tables
+        self._accepted_tables = accepted_tables
         self._hook = hook
         self._replication_seq = replication_seq
 
@@ -81,6 +82,8 @@ class PacketImporter(object):
             #print 'BEGIN; --', xid
             for id, table, type in sorted(transaction):
                 if table in self._ignored_tables:
+                    continue
+                if self._accepted_tables and table not in self._accepted_tables:
                     continue
                 fulltable = self._schema + '.' + table
                 if fulltable not in stats:
@@ -123,10 +126,10 @@ class PacketImporter(object):
         self._hook.after_commit()
 
 
-def process_tar(fileobj, db, schema, ignored_tables, expected_schema_seq, replication_seq, hook):
+def process_tar(fileobj, db, schema, ignored_tables, expected_schema_seq, replication_seq, hook, accepted_tables=None):
     print "Processing", fileobj.name
     tar = tarfile.open(fileobj=fileobj, mode='r:bz2')
-    importer = PacketImporter(db, schema, ignored_tables, replication_seq, hook)
+    importer = PacketImporter(db, schema, ignored_tables, replication_seq, hook, accepted_tables)
     for member in tar:
         if member.name == 'SCHEMA_SEQUENCE':
             schema_seq = int(tar.extractfile(member).read().strip())
@@ -163,7 +166,10 @@ db = connect_db(config)
 schema = config.get('DATABASE', 'schema')
 base_url = config.get('MUSICBRAINZ', 'base_url')
 ignored_tables = set(config.get('TABLES', 'ignore').split(','))
-
+if config.has_option('TABLES', 'accept'):
+    accepted_tables = set([x.strip() for x in config.get('TABLES', 'accept').split(',')])
+else:
+    accepted_tables = None
 if config.solr.enabled:
     from mbslave.search import SolrReplicationHook
     hook_class = SolrReplicationHook
@@ -186,7 +192,7 @@ while True:
         print 'Not found, stopping'
         status.end()
         break
-    process_tar(tmp, db, schema, ignored_tables, schema_seq, replication_seq, hook)
+    process_tar(tmp, db, schema, ignored_tables, schema_seq, replication_seq, hook, accepted_tables)
     tmp.close()
     status.update(replication_seq)
 
